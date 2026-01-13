@@ -3,18 +3,16 @@ import { AppState, User, BiddingItem, BidRecord, LogRecord, Winner } from '../ty
 import { INITIAL_USERS, INITIAL_ITEMS } from '../constants';
 
 /**
- * NOTE FOR DEVELOPER:
- * To use a real Google Sheet, you would typically use a Google Apps Script Web App
- * as a proxy to handle POST/GET requests from the frontend, as writing directly 
- * to Google Sheets from a browser involves complex OAuth flows and CORS issues.
- * 
- * The methods below simulate these API calls.
+ * PRODUCTION READY SHEETS SERVICE
+ * In a Vercel deployment, you can set GOOGLE_SHEET_API_URL in your Environment Variables.
+ * This should point to a Google Apps Script Web App or a service like SheetDB.
  */
 
 class SheetsService {
-  private storageKey = 'bidmaster_data';
+  private storageKey = 'bidmaster_v2_data';
+  private apiUrl = (import.meta as any).env?.VITE_SHEETS_API_URL || '';
 
-  private loadFromStorage(): AppState {
+  private async getLocalState(): Promise<AppState> {
     const data = localStorage.getItem(this.storageKey);
     if (data) {
       return JSON.parse(data);
@@ -27,35 +25,57 @@ class SheetsService {
       logs: [],
       winners: []
     };
-    this.saveToStorage(initial);
+    this.saveToLocal(initial);
     return initial;
   }
 
-  private saveToStorage(state: AppState) {
+  private saveToLocal(state: AppState) {
     localStorage.setItem(this.storageKey, JSON.stringify(state));
   }
 
   async fetchData(): Promise<AppState> {
-    // In production, this would be: await fetch('YOUR_APPS_SCRIPT_URL')
+    if (this.apiUrl) {
+      try {
+        const response = await fetch(this.apiUrl);
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+      } catch (err) {
+        console.warn("API Fetch failed, falling back to Local Storage", err);
+        return this.getLocalState();
+      }
+    }
     return new Promise((resolve) => {
-      setTimeout(() => resolve(this.loadFromStorage()), 300);
+      setTimeout(async () => resolve(await this.getLocalState()), 150);
     });
   }
 
   async updateState(newState: AppState): Promise<boolean> {
-    this.saveToStorage(newState);
+    this.saveToLocal(newState);
+    
+    if (this.apiUrl) {
+      try {
+        await fetch(this.apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newState)
+        });
+      } catch (err) {
+        console.error("API Update failed", err);
+        return false;
+      }
+    }
     return true;
   }
 
   async addLog(log: Omit<LogRecord, 'id' | 'timestamp'>): Promise<void> {
-    const state = this.loadFromStorage();
+    const state = await this.getLocalState();
     const newLog: LogRecord = {
       ...log,
       id: Math.random().toString(36).substr(2, 9),
       timestamp: new Date().toISOString()
     };
     state.logs.unshift(newLog);
-    this.saveToStorage(state);
+    await this.updateState(state);
   }
 }
 

@@ -1,41 +1,48 @@
 
 <!DOCTYPE html>
-<html lang="en" style="font-size: 16px;">
+<html lang="en" style="font-size: clamp(14px, 1.1vw, 17px);">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BidMaster Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BidMaster Pro | High-Value Asset Auction Platform</title>
+    <meta name="description" content="Secure and real-time bidding system for premium asset management.">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        :root {
+            --font-main: "Segoe UI", Candara, "Bitstream Vera Sans", "DejaVu Sans", "Bitstream Vera Sans", "Trebuchet MS", Verdana, "Verdana Ref", sans-serif;
+        }
         body { 
-          font-family: "Segoe UI", Candara, "Bitstream Vera Sans", "DejaVu Sans", "Bitstream Vera Sans", "Trebuchet MS", Verdana, "Verdana Ref", sans-serif;
-          background-color: #020617; /* slate-950 */
+          font-family: var(--font-main);
+          background-color: #020617;
           line-height: 1.5;
+          overflow-x: hidden;
+          -webkit-font-smoothing: antialiased;
         }
         .glass-morphism {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .glow-indigo {
-          box-shadow: 0 0 20px -5px rgba(79, 70, 229, 0.4);
+          box-shadow: 0 0 25px -5px rgba(79, 70, 229, 0.3);
         }
         .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
+          width: 5px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #1e293b;
+          background: #334155;
           border-radius: 10px;
         }
         @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
+          from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in {
-          animation: fade-in 0.4s ease-out forwards;
+          animation: fade-in 0.3s ease-out forwards;
         }
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
@@ -51,12 +58,15 @@
   "imports": {
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3"
+    "react": "https://esm.sh/react@^19.2.3",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
 </script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>
