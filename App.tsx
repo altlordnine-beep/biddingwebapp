@@ -209,13 +209,13 @@ const App: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h1 className="text-4xl font-black text-white tracking-tight mb-2">BidMaster <span className="text-indigo-500">Pro</span></h1>
+            <h1 className="text-3xl font-bold text-white tracking-tight mb-2">BidMaster <span className="text-indigo-500">Pro</span></h1>
             <p className="text-slate-400 font-medium">Elevate your bidding experience</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-1.5">
-              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Identity ID</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Identity ID</label>
               <input 
                 type="text" 
                 required
@@ -226,7 +226,7 @@ const App: React.FC = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Access Key</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Access Key</label>
               <input 
                 type="password" 
                 required
@@ -243,7 +243,7 @@ const App: React.FC = () => {
             )}
             <button 
               type="submit" 
-              className="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl shadow-lg shadow-indigo-900/20 hover:bg-indigo-500 transition-all active:scale-[0.98] glow-indigo uppercase tracking-widest text-sm"
+              className="w-full bg-indigo-600 text-white font-bold py-5 rounded-2xl shadow-lg shadow-indigo-900/20 hover:bg-indigo-500 transition-all active:scale-[0.98] glow-indigo uppercase tracking-widest text-sm"
             >
               Enter Dashboard
             </button>
@@ -275,7 +275,7 @@ const App: React.FC = () => {
       <main className="max-w-5xl mx-auto px-6 pt-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <h2 className="text-4xl font-black text-white tracking-tight">
+            <h2 className="text-2xl font-bold text-white tracking-tight">
               {view === 'home' ? 'Marketplace' : 'Management Console'}
             </h2>
             <p className="text-slate-400 font-medium mt-1">
@@ -288,14 +288,14 @@ const App: React.FC = () => {
           <div className="flex bg-slate-900 p-1.5 rounded-2xl border border-white/5 shadow-inner w-fit">
             <button 
               onClick={() => setView('home')}
-              className={`px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${view === 'home' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`px-8 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${view === 'home' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
             >
               Auctions
             </button>
             {isAdmin && (
               <button 
                 onClick={() => setView('admin')}
-                className={`px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${view === 'admin' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                className={`px-8 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${view === 'admin' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
               >
                 Settings
               </button>

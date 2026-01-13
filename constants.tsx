@@ -36,3 +36,6 @@ export const INITIAL_ITEMS: BiddingItem[] = [
 
 export const COOLDOWN_SECONDS = 30;
 export const BID_TIME_EXTENSION_MINUTES = 3;
+
+// URL to the Google Sheet used as the database backend
+export const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit';

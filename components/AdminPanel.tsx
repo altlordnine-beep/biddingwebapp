@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { User, BiddingItem, Winner, LogRecord, ItemStatus, UserRole } from '../types';
+import { GOOGLE_SHEET_URL } from '../constants';
 
 interface AdminPanelProps {
   users: User[];
@@ -21,6 +22,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
     if (confirm('Permanently delete this asset from the database?')) {
       onUpdateItems(items.filter(i => i.id !== id));
     }
+  };
+
+  const handleOpenSheet = () => {
+    window.open(GOOGLE_SHEET_URL, '_blank');
   };
 
   const handleStartBidding = (id: string) => {
@@ -100,24 +105,36 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex gap-4 p-1.5 bg-slate-900 rounded-2xl w-fit border border-white/5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex gap-4 p-1.5 bg-slate-900 rounded-2xl w-fit border border-white/5">
+          <button 
+            onClick={() => setMainTab('dashboard')}
+            className={`px-8 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex items-center gap-3 ${mainTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            Personnel
+          </button>
+          <button 
+            onClick={() => setMainTab('bidding')}
+            className={`px-8 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex items-center gap-3 ${mainTab === 'bidding' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            Assets
+          </button>
+        </div>
+
         <button 
-          onClick={() => setMainTab('dashboard')}
-          className={`px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-3 ${mainTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+          onClick={handleOpenSheet}
+          className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 rounded-xl font-bold text-xs uppercase tracking-widest transition-all group"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          Personnel
-        </button>
-        <button 
-          onClick={() => setMainTab('bidding')}
-          className={`px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-3 ${mainTab === 'bidding' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-          Assets
+          Edit Database (Sheets)
         </button>
       </div>
 
@@ -125,18 +142,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
         {mainTab === 'dashboard' ? (
           <div className="p-10">
             <div className="mb-10">
-              <h2 className="text-2xl font-black text-white tracking-tight">Active Personnel</h2>
+              <h2 className="text-xl font-bold text-white tracking-tight">Active Personnel</h2>
               <p className="text-slate-500 text-sm font-medium mt-1">Registry of all authorized participants and administrators.</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-white/5 text-slate-500 uppercase tracking-widest text-[10px] font-black">
-                    <th className="pb-5 pl-4">Universal ID</th>
-                    <th className="pb-5">Full Designation</th>
-                    <th className="pb-5">Total Liquidity</th>
-                    <th className="pb-5">Security Rank</th>
-                    <th className="pb-5">Power Rating</th>
+                  <tr className="border-b border-white/5 text-slate-500 uppercase tracking-widest text-[10px] font-bold">
+                    <th className="pb-5 pl-4">ID</th>
+                    <th className="pb-5">Designation</th>
+                    <th className="pb-5">Liquidity</th>
+                    <th className="pb-5">Rank</th>
+                    <th className="pb-5">Score</th>
                     <th className="pb-5">Actions</th>
                   </tr>
                 </thead>
@@ -144,16 +161,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                   {users.map(u => (
                     <tr key={u.id} className="hover:bg-white/5 transition-colors group">
                       <td className="py-6 pl-4 font-mono font-bold text-slate-400 text-sm">{u.id}</td>
-                      <td className="py-6 font-black text-slate-100">{u.name}</td>
+                      <td className="py-6 font-bold text-slate-100">{u.name}</td>
                       <td className="py-6">
-                        <span className="text-indigo-400 font-black text-lg">${u.walletBalance.toLocaleString()}</span>
+                        <span className="text-indigo-400 font-bold text-lg">${u.walletBalance.toLocaleString()}</span>
                       </td>
                       <td className="py-6">
-                        <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${u.role === UserRole.ADMIN ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-slate-800 text-slate-400'}`}>
+                        <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest ${u.role === UserRole.ADMIN ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-slate-800 text-slate-400'}`}>
                           {u.role}
                         </span>
                       </td>
-                      <td className="py-6 font-black text-amber-500 text-lg">{u.powerScore}</td>
+                      <td className="py-6 font-bold text-amber-500 text-lg">{u.powerScore}</td>
                       <td className="py-6">
                         <button className="text-slate-600 hover:text-indigo-400 transition-colors">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -174,7 +191,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                 <button
                   key={tab}
                   onClick={() => setBiddingSubTab(tab)}
-                  className={`flex-1 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+                  className={`flex-1 py-4 px-6 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
                     biddingSubTab === tab ? 'bg-slate-800 text-indigo-400 shadow-xl border border-white/5' : 'text-slate-600 hover:text-slate-400'
                   }`}
                 >
@@ -188,12 +205,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                 <div className="space-y-8">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="text-xl font-black text-white uppercase tracking-widest">Global Asset Index</h3>
+                      <h3 className="text-xl font-bold text-white uppercase tracking-widest">Global Asset Index</h3>
                       <p className="text-sm text-slate-500 font-medium">Lifecycle management for high-value auctions.</p>
                     </div>
                     <button 
                       onClick={() => setEditingItem({ durationMode: 'hms', durationH: 1, durationM: 0, durationS: 0 })}
-                      className="bg-white text-slate-950 px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-xl shadow-white/5"
+                      className="bg-white text-slate-950 px-8 py-3 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-slate-200 transition-all shadow-xl shadow-white/5"
                     >
                       Initialize Asset
                     </button>
@@ -203,7 +220,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                     <div className="bg-slate-800/40 p-8 rounded-[32px] border-2 border-dashed border-white/10 animate-fade-in">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-1">Asset Designation</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] ml-1">Asset Designation</label>
                           <input 
                             placeholder="e.g. Prototype X-1" 
                             className="w-full p-4 rounded-2xl border border-white/5 bg-slate-900 text-white placeholder-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/50"
@@ -212,7 +229,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-1">Starting Valuation</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] ml-1">Starting Valuation</label>
                           <input 
                             placeholder="0" 
                             type="number"
@@ -224,17 +241,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
 
                         <div className="md:col-span-2 space-y-6 bg-slate-900 p-8 rounded-3xl border border-white/5 shadow-inner">
                           <div className="flex items-center justify-between">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Temporal Settings</h4>
+                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Temporal Settings</h4>
                             <div className="flex bg-slate-800 p-1.5 rounded-xl border border-white/5">
                               <button 
                                 onClick={() => setEditingItem({...editingItem, durationMode: 'hms'})}
-                                className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${editingItem.durationMode === 'hms' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500'}`}
+                                className={`px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${editingItem.durationMode === 'hms' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500'}`}
                               >
                                 Relative
                               </button>
                               <button 
                                 onClick={() => setEditingItem({...editingItem, durationMode: 'fixed'})}
-                                className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${editingItem.durationMode === 'fixed' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500'}`}
+                                className={`px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${editingItem.durationMode === 'fixed' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500'}`}
                               >
                                 Fixed
                               </button>
@@ -244,28 +261,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                           {editingItem.durationMode === 'hms' ? (
                             <div className="grid grid-cols-3 gap-6">
                               <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center block">H</label>
+                                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center block">H</label>
                                 <input 
                                   type="number" 
-                                  className="w-full p-4 rounded-2xl border border-white/5 bg-slate-800 text-white text-center font-black text-xl outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                  className="w-full p-4 rounded-2xl border border-white/5 bg-slate-800 text-white text-center font-bold text-xl outline-none focus:ring-2 focus:ring-indigo-500/50"
                                   value={editingItem.durationH ?? 1}
                                   onChange={e => setEditingItem({...editingItem, durationH: Number(e.target.value)})}
                                 />
                               </div>
                               <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center block">M</label>
+                                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center block">M</label>
                                 <input 
                                   type="number" 
-                                  className="w-full p-4 rounded-2xl border border-white/5 bg-slate-800 text-white text-center font-black text-xl outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                  className="w-full p-4 rounded-2xl border border-white/5 bg-slate-800 text-white text-center font-bold text-xl outline-none focus:ring-2 focus:ring-indigo-500/50"
                                   value={editingItem.durationM ?? 0}
                                   onChange={e => setEditingItem({...editingItem, durationM: Number(e.target.value)})}
                                 />
                               </div>
                               <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center block">S</label>
+                                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center block">S</label>
                                 <input 
                                   type="number" 
-                                  className="w-full p-4 rounded-2xl border border-white/5 bg-slate-800 text-white text-center font-black text-xl outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                  className="w-full p-4 rounded-2xl border border-white/5 bg-slate-800 text-white text-center font-bold text-xl outline-none focus:ring-2 focus:ring-indigo-500/50"
                                   value={editingItem.durationS ?? 0}
                                   onChange={e => setEditingItem({...editingItem, durationS: Number(e.target.value)})}
                                 />
@@ -273,7 +290,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                             </div>
                           ) : (
                             <div className="space-y-2">
-                              <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Final Timestamp</label>
+                              <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest ml-1">Final Timestamp</label>
                               <input 
                                 type="datetime-local" 
                                 className="w-full p-4 rounded-2xl border border-white/5 bg-slate-800 text-white font-bold outline-none focus:ring-2 focus:ring-indigo-500/50 [color-scheme:dark]"
@@ -285,7 +302,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                         </div>
 
                         <div className="space-y-2 md:col-span-2">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-1">Visual Reference</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] ml-1">Visual Reference</label>
                           <div className="flex flex-col md:flex-row gap-6">
                             <div className="flex-1">
                               <input 
@@ -320,8 +337,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                         </div>
                       </div>
                       <div className="flex gap-4 mt-12">
-                        <button onClick={handleSaveItem} className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-indigo-900/20 hover:bg-indigo-500 transition-all">Commit Changes</button>
-                        <button onClick={() => setEditingItem(null)} className="bg-slate-900 text-slate-400 border border-white/5 px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:text-white transition-all">Cancel</button>
+                        <button onClick={handleSaveItem} className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs shadow-xl shadow-indigo-900/20 hover:bg-indigo-500 transition-all">Commit Changes</button>
+                        <button onClick={() => setEditingItem(null)} className="bg-slate-900 text-slate-400 border border-white/5 px-10 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs hover:text-white transition-all">Cancel</button>
                       </div>
                     </div>
                   )}
@@ -339,7 +356,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                           </div>
                           <div>
                             <div className="flex items-center gap-3 mb-1.5">
-                              <h4 className="font-black text-white text-lg tracking-tight">{item.name}</h4>
+                              <h4 className="font-bold text-white text-lg tracking-tight">{item.name}</h4>
                               <span className="text-[10px] font-mono font-bold text-slate-600 px-2 py-0.5 bg-white/5 rounded-md">ID: {item.id}</span>
                             </div>
                             <div className="flex items-center gap-4 flex-wrap">
@@ -347,7 +364,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                               <div className="w-1.5 h-1.5 rounded-full bg-slate-800"></div>
                               <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Expiry: <span className="text-slate-300 font-mono">{new Date(item.endTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span></p>
                               <div className="w-1.5 h-1.5 rounded-full bg-slate-800"></div>
-                              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Status: <span className={`font-black ${
+                              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Status: <span className={`font-bold ${
                                 item.status === ItemStatus.OPEN ? 'text-emerald-400' : 
                                 item.status === ItemStatus.CLOSED ? 'text-rose-500' : 'text-amber-500'
                               }`}>{item.status}</span></p>
@@ -358,7 +375,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                           {item.status === ItemStatus.PENDING && (
                             <button 
                               onClick={() => handleStartBidding(item.id)}
-                              className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                              className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white px-6 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2"
                             >
                               Initialize Market
                             </button>
@@ -390,28 +407,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
               {biddingSubTab === 'winners' && (
                 <div className="space-y-8">
                   <div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-widest">Victory Archives</h3>
+                    <h3 className="text-xl font-bold text-white uppercase tracking-widest">Victory Archives</h3>
                     <p className="text-sm text-slate-500 font-medium">Historical data of finalized transactions and winners.</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {winners.length > 0 ? winners.map((w, i) => (
                       <div key={i} className="bg-slate-950/40 p-8 rounded-[32px] border border-white/5 relative overflow-hidden group hover:border-indigo-500/30 transition-all shadow-xl">
                         {w.isTie && (
-                          <div className="absolute top-0 right-0 bg-rose-500 text-white text-[10px] px-4 py-1.5 font-black uppercase tracking-widest">Consensus Victory</div>
+                          <div className="absolute top-0 right-0 bg-rose-500 text-white text-[10px] px-4 py-1.5 font-bold uppercase tracking-widest">Consensus Victory</div>
                         )}
-                        <p className="text-[10px] text-slate-500 uppercase font-black mb-2 tracking-[0.2em]">{w.itemName}</p>
-                        <p className="font-black text-white text-2xl mb-6 tracking-tight">{w.winnerName}</p>
+                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-2 tracking-[0.2em]">{w.itemName}</p>
+                        <p className="font-bold text-white text-2xl mb-6 tracking-tight">{w.winnerName}</p>
                         <div className="flex justify-between items-end">
                           <div>
-                            <p className="text-[10px] text-slate-600 uppercase font-black tracking-widest mb-1">Settlement Price</p>
-                            <p className="text-indigo-400 font-black text-3xl tracking-tighter">${w.winningAmount.toLocaleString()}</p>
+                            <p className="text-[10px] text-slate-600 uppercase font-bold tracking-widest mb-1">Settlement Price</p>
+                            <p className="text-indigo-400 font-bold text-3xl tracking-tighter">${w.winningAmount.toLocaleString()}</p>
                           </div>
                           <span className="text-[10px] text-slate-600 font-mono font-bold mb-1.5">{new Date(w.awardedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
                     )) : (
                       <div className="col-span-full py-24 text-center bg-slate-950/30 rounded-[32px] border border-dashed border-white/5">
-                        <p className="text-slate-600 font-black uppercase tracking-widest text-sm">Archival Records Empty</p>
+                        <p className="text-slate-600 font-bold uppercase tracking-widest text-sm">Archival Records Empty</p>
                       </div>
                     )}
                   </div>
@@ -421,7 +438,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
               {biddingSubTab === 'logs' && (
                 <div className="space-y-8">
                   <div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-widest">Network Activity</h3>
+                    <h3 className="text-xl font-bold text-white uppercase tracking-widest">Network Activity</h3>
                     <p className="text-sm text-slate-500 font-medium">Real-time system telemetry and transaction logs.</p>
                   </div>
                   <div className="space-y-4">
@@ -437,14 +454,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, items, winners, logs, on
                             </svg>
                           </div>
                           <div>
-                            <p className="text-sm font-black text-slate-200">
+                            <p className="text-sm font-bold text-slate-200">
                               {log.userName} <span className="text-slate-500 font-medium mx-1">/</span> {log.action}
                             </p>
                             <p className="text-xs text-slate-500 font-medium mt-0.5">{log.description}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{new Date(log.timestamp).toLocaleDateString()}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(log.timestamp).toLocaleDateString()}</p>
                           <p className="text-[10px] text-indigo-500 font-mono mt-0.5">{new Date(log.timestamp).toLocaleTimeString()}</p>
                         </div>
                       </div>
