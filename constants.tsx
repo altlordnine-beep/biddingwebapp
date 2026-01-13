@@ -32,23 +32,15 @@ export const INITIAL_ITEMS: BiddingItem[] = [
     endTime: new Date(Date.now() + 7200000).toISOString(),
     status: ItemStatus.OPEN,
     isTie: false
-  },
-  {
-    id: 'I003',
-    name: 'Limited Edition Digital Canvas',
-    imageUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=800',
-    startingPrice: 4500,
-    highestBidAmount: 4500,
-    highestBidUserName: 'Initial Listing',
-    highestBidUserId: '',
-    endTime: new Date(Date.now() + 1800000).toISOString(),
-    status: ItemStatus.OPEN,
-    isTie: false
   }
 ];
 
-export const COOLDOWN_SECONDS = 15; // Optimized for faster UX in production
+export const COOLDOWN_SECONDS = 15;
 export const BID_TIME_EXTENSION_MINUTES = 2;
+export const AUTO_REFRESH_INTERVAL_MS = 10000; // Polling every 10 seconds for real-time feel
 
-// Production Google Sheet Backend Reference
-export const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit#gid=0';
+/** 
+ * NAME YOUR GOOGLE SHEET: "Bidding Database"
+ * Link below is the UI access point for admins.
+ */
+export const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit';
