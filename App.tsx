@@ -6,12 +6,12 @@ import Header from './components/Header';
 import BiddingItemCard from './components/BiddingItemCard';
 import BidModal from './components/BidModal';
 import AdminPanel from './components/AdminPanel';
-import { BID_TIME_EXTENSION_MINUTES, AUTO_REFRESH_INTERVAL_MS } from './constants';
+import { BID_TIME_EXTENSION_MINUTES, AUTO_REFRESH_INTERVAL_MS, INITIAL_USERS } from './constants';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [items, setItems] = useState<BiddingItem[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>(INITIAL_USERS); // Default to initial to avoid login block
   const [bids, setBids] = useState<BidRecord[]>([]);
   const [logs, setLogs] = useState<LogRecord[]>([]);
   const [winners, setWinners] = useState<Winner[]>([]);
@@ -23,7 +23,6 @@ const App: React.FC = () => {
   const [loginForm, setLoginForm] = useState({ id: '', password: '' });
   const [loginError, setLoginError] = useState('');
 
-  // Use ref to keep track of current items/users for the sync closure
   const stateRef = useRef({ items, users, bids, logs, winners });
 
   useEffect(() => {
@@ -38,7 +37,7 @@ const App: React.FC = () => {
       const data = await sheetsService.fetchData();
       if (data) {
         setItems(data.items || []);
-        setUsers(data.users || []);
+        setUsers(data.users || INITIAL_USERS);
         setBids(data.bids || []);
         setLogs(data.logs || []);
         setWinners(data.winners || []);
@@ -52,21 +51,18 @@ const App: React.FC = () => {
         }
       }
     } catch (err) {
-      console.error("Failed to fetch data from Bidding Database:", err);
+      console.error("Failed to sync with Bidding Database:", err);
     } finally {
       setIsLoading(false);
       setIsSyncing(false);
     }
   }, [user]);
 
-  // Initial load and auto-polling for real-time sync
   useEffect(() => {
-    refreshData();
+    // Initial fetch
+    refreshData().catch(() => setIsLoading(false));
     
-    const interval = setInterval(() => {
-      refreshData(true);
-    }, AUTO_REFRESH_INTERVAL_MS);
-
+    // Recovery of local session
     const savedUser = localStorage.getItem('bidmaster_session_user');
     if (savedUser) {
       try {
@@ -77,12 +73,19 @@ const App: React.FC = () => {
       }
     }
 
+    // Polling interval for real-time sync with Google Sheets
+    const interval = setInterval(() => {
+      refreshData(true);
+    }, AUTO_REFRESH_INTERVAL_MS);
+
     return () => clearInterval(interval);
-  }, [refreshData]);
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const foundUser = users.find(u => u.id.toLowerCase() === loginForm.id.toLowerCase() && u.password === loginForm.password);
+    const loginId = loginForm.id.trim().toUpperCase();
+    const foundUser = users.find(u => u.id.toUpperCase() === loginId && u.password === loginForm.password);
+    
     if (foundUser) {
       setUser(foundUser);
       localStorage.setItem('bidmaster_session_user', JSON.stringify(foundUser));
@@ -94,10 +97,10 @@ const App: React.FC = () => {
         userId: foundUser.id,
         userName: foundUser.name,
         action: 'LOGIN',
-        description: `Secure terminal access granted to ${foundUser.id}.`
+        description: `Personnel ${foundUser.id} authorized for terminal access.`
       });
     } else {
-      setLoginError('Invalid Identification ID or Access Key.');
+      setLoginError('Authentication Failed: Identity or Access Key mismatch.');
     }
   };
 
@@ -107,7 +110,7 @@ const App: React.FC = () => {
         userId: user.id,
         userName: user.name,
         action: 'LOGOUT',
-        description: 'Session terminated securely.'
+        description: 'Session terminated by user.'
       });
     }
     setUser(null);
@@ -117,12 +120,12 @@ const App: React.FC = () => {
   };
 
   const handlePlaceBid = async (itemId: string, amount: number): Promise<string | null> => {
-    if (!user) return "Security Exception: Session invalid.";
+    if (!user) return "Unauthorized: Please log in again.";
 
     const item = items.find(i => i.id === itemId);
-    if (!item) return "Data Error: Asset not found.";
+    if (!item) return "Registry Error: Asset ID not found.";
 
-    const hasExistingBidder = item.highestBidUserId && item.highestBidUserId !== '';
+    const hasExistingBidder = !!item.highestBidUserId;
     const previousBidderId = item.highestBidUserId;
     const previousAmount = item.highestBidAmount;
     
@@ -139,12 +142,8 @@ const App: React.FC = () => {
     } : i);
 
     let updatedUsers = users.map(u => {
-      if (u.id === user.id) {
-        return { ...u, walletBalance: u.walletBalance - amount };
-      }
-      if (hasExistingBidder && u.id === previousBidderId && !isTie) {
-        return { ...u, walletBalance: u.walletBalance + previousAmount };
-      }
+      if (u.id === user.id) return { ...u, walletBalance: u.walletBalance - amount };
+      if (hasExistingBidder && u.id === previousBidderId && !isTie) return { ...u, walletBalance: u.walletBalance + previousAmount };
       return u;
     });
 
@@ -158,150 +157,192 @@ const App: React.FC = () => {
       type: 'PLACE'
     };
 
-    const newBids = [newBid, ...bids];
-
     const newState = {
       currentUser: user,
       items: updatedItems,
       users: updatedUsers,
-      bids: newBids,
+      bids: [newBid, ...bids],
       logs: logs,
       winners: winners
     };
 
-    // Optimistic update
+    // Optimistic UI updates
     setItems(updatedItems);
     setUsers(updatedUsers);
-    setBids(newBids);
+    setBids(prev => [newBid, ...prev]);
 
     const success = await sheetsService.updateState(newState);
-    if (!success) return "Connection Error: Failed to sync with Bidding Database.";
+    if (!success) return "Database Error: Failed to commit bid to Bidding Database.";
     
     sheetsService.addLog({
       userId: user.id,
       userName: user.name,
       action: isTie ? 'MATCH_BID' : 'PLACE_BID',
-      description: `Authorized $${amount} offer on ${item.name}.`
+      description: `Committed $${amount} bid for ${item.name}.`
     });
-
-    const updatedMe = updatedUsers.find(u => u.id === user.id);
-    if (updatedMe) {
-        setUser(updatedMe);
-        localStorage.setItem('bidmaster_session_user', JSON.stringify(updatedMe));
-    }
 
     return null;
   };
 
-  const isAdmin = user?.role === UserRole.ADMIN;
+  if (!user && !isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6 relative overflow-hidden">
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-indigo-900/10 blur-[160px] rounded-full"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-violet-900/10 blur-[160px] rounded-full"></div>
 
-  return (
-    <div className="min-h-screen bg-slate-950 pb-20 selection:bg-indigo-500 selection:text-white">
-      <Header 
-        user={user!} 
-        onLogout={handleLogout} 
-        onRefresh={() => refreshData()}
-        isLoading={isLoading || isSyncing}
-      />
-
-      <main className="max-w-6xl mx-auto px-6 pt-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div className="animate-fade-in">
-            <h2 className="text-2xl font-bold text-white tracking-tight">
-              {view === 'home' ? 'Marketplace' : 'Management Hub'}
-            </h2>
-            <p className="text-slate-500 text-sm font-medium mt-1">
-              {view === 'home' 
-                ? 'Authorized bidding channels connected to Bidding Database.' 
-                : 'Administrative overrides and database synchronization control.'}
-            </p>
+        <div className="glass-morphism p-8 md:p-12 rounded-[48px] w-full max-w-md border border-white/5 shadow-2xl relative z-10 animate-fade-in">
+          <div className="text-center mb-10">
+            <div className="inline-flex bg-indigo-600/15 p-5 rounded-3xl text-indigo-400 mb-6 border border-indigo-500/20 shadow-inner">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-white tracking-tight mb-2 uppercase tracking-widest">Login Terminal</h1>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Connect to Bidding Database</p>
           </div>
 
-          <div className="flex bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 shadow-inner backdrop-blur-md w-fit animate-fade-in relative">
-            {isSyncing && (
-              <div className="absolute -top-6 right-2 text-[8px] font-bold text-indigo-400 uppercase tracking-widest animate-pulse">
-                Syncing Database...
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Identity ID</label>
+              <input 
+                type="text" 
+                required
+                placeholder="U001"
+                className="w-full bg-slate-800/40 border border-white/5 rounded-2xl py-4 px-6 text-white text-sm placeholder-slate-700 focus:ring-1 focus:ring-indigo-500/50 focus:bg-slate-800 outline-none transition-all font-semibold"
+                value={loginForm.id}
+                onChange={e => setLoginForm({...loginForm, id: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Secure Key</label>
+              <input 
+                type="password" 
+                required
+                placeholder="••••••••"
+                className="w-full bg-slate-800/40 border border-white/5 rounded-2xl py-4 px-6 text-white text-sm placeholder-slate-700 focus:ring-1 focus:ring-indigo-500/50 focus:bg-slate-800 outline-none transition-all"
+                value={loginForm.password}
+                onChange={e => setLoginForm({...loginForm, password: e.target.value})}
+              />
+            </div>
+            {loginError && (
+              <div className="p-4 bg-rose-500/10 border border-rose-500/15 text-rose-400 text-xs font-bold text-center rounded-2xl animate-shake">
+                {loginError}
               </div>
             )}
             <button 
-              onClick={() => setView('home')}
-              className={`px-8 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${view === 'home' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-slate-300'}`}
+              type="submit" 
+              className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-xl shadow-indigo-900/30 hover:bg-indigo-500 transition-all active:scale-[0.97] text-xs uppercase tracking-[0.2em] glow-indigo"
             >
-              Auctions
+              Initialize Access
             </button>
-            {isAdmin && (
-              <button 
-                onClick={() => setView('admin')}
-                className={`px-8 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${view === 'admin' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-slate-300'}`}
-              >
-                Settings
-              </button>
-            )}
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-white/5 text-center">
+            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest mb-3">System Access Codes</p>
+            <div className="flex flex-col gap-1 text-[9px] font-bold text-slate-500">
+              <span>ADMIN: U001 / password</span>
+              <span>USER: U002 / user123</span>
+            </div>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-40">
-            <div className="w-12 h-12 border-[4px] border-indigo-600/20 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] animate-pulse">Connecting to Bidding Database Registry...</p>
-          </div>
-        ) : (
-          <div className="animate-fade-in">
-            {view === 'home' ? (
-              <div className="grid grid-cols-1 gap-8">
-                {items.length > 0 ? items.map(item => (
-                  <BiddingItemCard 
-                    key={item.id} 
-                    item={item} 
-                    bids={bids}
-                    onClick={setSelectedItem} 
-                  />
-                )) : (
-                  <div className="text-center py-32 bg-slate-900/30 rounded-[48px] border border-dashed border-white/10">
-                    <p className="text-slate-600 font-bold uppercase tracking-widest text-xs">No active asset channels detected in database.</p>
-                  </div>
+  return (
+    <div className="min-h-screen bg-slate-950 pb-20 selection:bg-indigo-500 selection:text-white">
+      {isLoading ? (
+        <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center p-6">
+          <div className="w-16 h-16 border-[4px] border-indigo-600/20 border-t-indigo-500 rounded-full animate-spin mb-8"></div>
+          <h2 className="text-white font-bold text-sm uppercase tracking-widest animate-pulse">Syncing Database</h2>
+          <p className="text-slate-600 text-[10px] mt-2 uppercase tracking-widest">Establishing secure link...</p>
+        </div>
+      ) : (
+        <>
+          <Header 
+            user={user!} 
+            onLogout={handleLogout} 
+            onRefresh={() => refreshData()}
+            isLoading={isSyncing}
+          />
+
+          <main className="max-w-6xl mx-auto px-6 pt-12">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+              <div className="animate-fade-in">
+                <h2 className="text-2xl font-bold text-white tracking-tight">
+                  {view === 'home' ? 'Active Markets' : 'Control Hub'}
+                </h2>
+                <p className="text-slate-500 text-sm font-medium mt-1 uppercase tracking-widest text-[10px]">
+                  Real-time synchronization active
+                </p>
+              </div>
+
+              <div className="flex bg-slate-900/50 p-1.5 rounded-2xl border border-white/5 shadow-inner backdrop-blur-md w-fit animate-fade-in relative">
+                <button 
+                  onClick={() => setView('home')}
+                  className={`px-8 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${view === 'home' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-slate-300'}`}
+                >
+                  Assets
+                </button>
+                {user?.role === UserRole.ADMIN && (
+                  <button 
+                    onClick={() => setView('admin')}
+                    className={`px-8 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${view === 'admin' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-slate-300'}`}
+                  >
+                    Settings
+                  </button>
                 )}
               </div>
-            ) : (
-              isAdmin && (
-                <AdminPanel 
-                  users={users} 
-                  items={items} 
-                  winners={winners} 
-                  logs={logs}
-                  onUpdateItems={async (newItems) => {
-                    setItems(newItems);
-                    await sheetsService.updateState({ ...stateRef.current, items: newItems, currentUser: user });
-                  }}
-                  onUpdateUsers={async (newUsers) => {
-                    setUsers(newUsers);
-                    await sheetsService.updateState({ ...stateRef.current, users: newUsers, currentUser: user });
-                  }}
-                />
-              )
-            )}
-          </div>
-        )}
-      </main>
+            </div>
 
-      {selectedItem && user && (
-        <BidModal 
-          item={selectedItem}
-          user={user}
-          bids={bids}
-          onClose={() => setSelectedItem(null)}
-          onPlaceBid={handlePlaceBid}
-        />
+            <div className="animate-fade-in">
+              {view === 'home' ? (
+                <div className="grid grid-cols-1 gap-8">
+                  {items.length > 0 ? items.map(item => (
+                    <BiddingItemCard 
+                      key={item.id} 
+                      item={item} 
+                      bids={bids}
+                      onClick={setSelectedItem} 
+                    />
+                  )) : (
+                    <div className="text-center py-32 bg-slate-900/30 rounded-[48px] border border-dashed border-white/10">
+                      <p className="text-slate-600 font-bold uppercase tracking-widest text-xs">Registry is currently empty.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                user?.role === UserRole.ADMIN && (
+                  <AdminPanel 
+                    users={users} 
+                    items={items} 
+                    winners={winners} 
+                    logs={logs}
+                    onUpdateItems={async (newItems) => {
+                      setItems(newItems);
+                      await sheetsService.updateState({ ...stateRef.current, items: newItems, currentUser: user });
+                    }}
+                    onUpdateUsers={async (newUsers) => {
+                      setUsers(newUsers);
+                      await sheetsService.updateState({ ...stateRef.current, users: newUsers, currentUser: user });
+                    }}
+                  />
+                )
+              )}
+            </div>
+          </main>
+
+          {selectedItem && (
+            <BidModal 
+              item={selectedItem}
+              user={user!}
+              bids={bids}
+              onClose={() => setSelectedItem(null)}
+              onPlaceBid={handlePlaceBid}
+            />
+          )}
+        </>
       )}
-
-      <button 
-        onClick={() => refreshData()}
-        className="fixed bottom-8 right-8 w-14 h-14 bg-white text-slate-950 rounded-2xl shadow-2xl flex items-center justify-center hover:bg-indigo-50 transition-all active:scale-90 z-40 md:hidden"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${isLoading || isSyncing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-      </button>
     </div>
   );
 };
