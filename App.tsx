@@ -69,7 +69,7 @@ const App: React.FC = () => {
         description: `User ${foundUser.id} session started.`
       });
     } else {
-      setLoginError('Invalid ID or password');
+      setLoginError('Incorrect credentials. Please try again.');
     }
   };
 
@@ -197,54 +197,64 @@ const App: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6">
-        <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200">
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6 relative overflow-hidden">
+        {/* Background Decorative Gradients */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-900/20 blur-[120px] rounded-full"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-900/20 blur-[120px] rounded-full"></div>
+
+        <div className="glass-morphism p-10 rounded-[40px] w-full max-w-md border border-white/5 shadow-2xl relative z-10 animate-fade-in">
           <div className="text-center mb-10">
-            <div className="inline-block bg-indigo-600 p-4 rounded-2xl text-white mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <div className="inline-flex bg-indigo-600/20 p-4 rounded-3xl text-indigo-400 mb-6 border border-indigo-500/20 shadow-inner">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Welcome Back</h1>
-            <p className="text-slate-500 mt-2 font-medium">Log in to BidMaster Pro</p>
+            <h1 className="text-4xl font-black text-white tracking-tight mb-2">BidMaster <span className="text-indigo-500">Pro</span></h1>
+            <p className="text-slate-400 font-medium">Elevate your bidding experience</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">User ID</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Identity ID</label>
               <input 
                 type="text" 
                 required
                 placeholder="U001"
-                className="w-full bg-slate-50 border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-semibold"
+                className="w-full bg-slate-800/50 border border-slate-700/50 rounded-2xl py-4 px-6 text-white placeholder-slate-600 focus:ring-2 focus:ring-indigo-500/50 focus:bg-slate-800 outline-none transition-all font-semibold"
                 value={loginForm.id}
                 onChange={e => setLoginForm({...loginForm, id: e.target.value})}
               />
             </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Password</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Access Key</label>
               <input 
                 type="password" 
                 required
                 placeholder="••••••••"
-                className="w-full bg-slate-50 border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full bg-slate-800/50 border border-slate-700/50 rounded-2xl py-4 px-6 text-white placeholder-slate-600 focus:ring-2 focus:ring-indigo-500/50 focus:bg-slate-800 outline-none transition-all"
                 value={loginForm.password}
                 onChange={e => setLoginForm({...loginForm, password: e.target.value})}
               />
             </div>
             {loginError && (
-              <p className="text-rose-500 text-sm font-bold text-center bg-rose-50 py-3 rounded-xl border border-rose-100 animate-pulse">{loginError}</p>
+              <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold text-center rounded-2xl animate-shake">
+                {loginError}
+              </div>
             )}
             <button 
               type="submit" 
-              className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-[0.98]"
+              className="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl shadow-lg shadow-indigo-900/20 hover:bg-indigo-500 transition-all active:scale-[0.98] glow-indigo uppercase tracking-widest text-sm"
             >
-              Sign In
+              Enter Dashboard
             </button>
           </form>
 
-          <div className="mt-8 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-            Credentials: <span className="text-slate-600">U001 / password</span> or <span className="text-slate-600">U002 / user123</span>
+          <div className="mt-10 pt-8 border-t border-white/5 text-center">
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3">System Access Details</p>
+            <div className="flex justify-center gap-4 text-[11px] font-bold">
+              <span className="text-slate-400">Admin: <span className="text-indigo-400">U001 / password</span></span>
+              <span className="text-slate-400">User: <span className="text-indigo-400">U002 / user123</span></span>
+            </div>
           </div>
         </div>
       </div>
@@ -254,7 +264,7 @@ const App: React.FC = () => {
   const isAdmin = user.role === UserRole.ADMIN;
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-slate-950 pb-20 selection:bg-indigo-500 selection:text-white">
       <Header 
         user={user} 
         onLogout={handleLogout} 
@@ -263,29 +273,29 @@ const App: React.FC = () => {
       />
 
       <main className="max-w-5xl mx-auto px-6 pt-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <h2 className="text-4xl font-black text-slate-900 tracking-tighter">
-              {view === 'home' ? 'Active Auctions' : 'Settings Dashboard'}
+            <h2 className="text-4xl font-black text-white tracking-tight">
+              {view === 'home' ? 'Marketplace' : 'Management Console'}
             </h2>
-            <p className="text-slate-500 font-medium mt-1">
+            <p className="text-slate-400 font-medium mt-1">
               {view === 'home' 
-                ? 'Bid on exclusive items and win the best deals.' 
-                : 'Manage system users, items, and view logs.'}
+                ? 'Curated high-value assets currently in auction.' 
+                : 'Administrative controls for users and assets.'}
             </p>
           </div>
 
-          <div className="flex bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm w-fit">
+          <div className="flex bg-slate-900 p-1.5 rounded-2xl border border-white/5 shadow-inner w-fit">
             <button 
               onClick={() => setView('home')}
-              className={`px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${view === 'home' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+              className={`px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${view === 'home' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
             >
               Auctions
             </button>
             {isAdmin && (
               <button 
                 onClick={() => setView('admin')}
-                className={`px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${view === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                className={`px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${view === 'admin' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
               >
                 Settings
               </button>
@@ -294,14 +304,14 @@ const App: React.FC = () => {
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-12 h-12 border-[6px] border-indigo-600 border-t-transparent rounded-full animate-spin mb-6"></div>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs animate-pulse">Syncing Cloud Database...</p>
+          <div className="flex flex-col items-center justify-center py-32">
+            <div className="w-16 h-16 border-[6px] border-indigo-600/20 border-t-indigo-500 rounded-full animate-spin mb-8"></div>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs animate-pulse">Syncing Encrypted Ledger...</p>
           </div>
         ) : (
-          <>
+          <div className="animate-fade-in">
             {view === 'home' ? (
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-8">
                 {items.length > 0 ? items.map(item => (
                   <BiddingItemCard 
                     key={item.id} 
@@ -310,13 +320,13 @@ const App: React.FC = () => {
                     onClick={setSelectedItem} 
                   />
                 )) : (
-                  <div className="col-span-full text-center py-32 bg-white rounded-[40px] border border-dashed border-slate-200">
-                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="col-span-full text-center py-32 bg-slate-900/50 rounded-[40px] border border-dashed border-white/5">
+                    <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                       </svg>
                     </div>
-                    <p className="text-slate-400 font-bold uppercase tracking-widest text-sm">No Active Auctions Found</p>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">No Active Assets Identified</p>
                   </div>
                 )}
               </div>
@@ -331,13 +341,13 @@ const App: React.FC = () => {
                   onUpdateUsers={updateAdminUsers}
                 />
               ) : (
-                <div className="text-center py-20 bg-rose-50 rounded-3xl border border-rose-100">
-                  <p className="text-rose-500 font-bold">Access Denied. You do not have permission to view this page.</p>
-                  <button onClick={() => setView('home')} className="mt-4 text-indigo-600 font-bold hover:underline">Return Home</button>
+                <div className="text-center py-20 bg-rose-900/10 rounded-3xl border border-rose-500/20">
+                  <p className="text-rose-400 font-bold">Unauthorized. Security protocols prevent access.</p>
+                  <button onClick={() => setView('home')} className="mt-4 text-indigo-400 font-bold hover:underline">Return Home</button>
                 </div>
               )
             )}
-          </>
+          </div>
         )}
       </main>
 
@@ -353,7 +363,7 @@ const App: React.FC = () => {
 
       <button 
         onClick={refreshData}
-        className="fixed bottom-10 right-10 w-16 h-16 bg-slate-900 text-white rounded-3xl shadow-2xl flex items-center justify-center hover:bg-black transition-all active:scale-90 z-40 md:hidden"
+        className="fixed bottom-10 right-10 w-16 h-16 bg-white text-slate-950 rounded-3xl shadow-2xl flex items-center justify-center hover:bg-slate-200 transition-all active:scale-90 z-40 md:hidden"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${isLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

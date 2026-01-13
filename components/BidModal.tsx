@@ -60,22 +60,22 @@ const BidModal: React.FC<BidModalProps> = ({ item, user, bids, onClose, onPlaceB
     setError(null);
 
     if (item.status === ItemStatus.CLOSED || new Date(item.endTime).getTime() < Date.now()) {
-      setError("This bidding has already closed.");
+      setError("Market window closed for this asset.");
       return;
     }
 
     if (bidAmount < item.highestBidAmount) {
-      setError(`Your bid must be at least the current highest bid ($${item.highestBidAmount}).`);
+      setError(`Minimum offer threshold is $${item.highestBidAmount}.`);
       return;
     }
 
     if (bidAmount > user.walletBalance) {
-      setError("Insufficient wallet balance.");
+      setError("Insufficient liquidity in wallet.");
       return;
     }
 
     if (cooldown > 0) {
-      setError(`Please wait ${cooldown}s before bidding again.`);
+      setError(`Wait ${cooldown}s for network confirmation.`);
       return;
     }
 
@@ -98,74 +98,80 @@ const BidModal: React.FC<BidModalProps> = ({ item, user, bids, onClose, onPlaceB
   ));
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
-      <div className="bg-white rounded-[40px] w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300 border border-slate-100">
-        <div className="relative h-56">
-          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl">
+      <div className="bg-slate-900 rounded-[40px] w-full max-w-xl overflow-hidden shadow-2xl border border-white/5 animate-fade-in">
+        <div className="relative h-64">
+          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover opacity-70" />
           <button 
             onClick={onClose}
-            className="absolute top-6 right-6 bg-black/20 hover:bg-black/40 backdrop-blur-xl p-2.5 rounded-2xl text-white transition-all hover:rotate-90"
+            className="absolute top-8 right-8 bg-slate-950/50 hover:bg-indigo-600 backdrop-blur-xl p-3 rounded-2xl text-white transition-all border border-white/10 hover:rotate-90"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          <div className="absolute bottom-6 left-6">
-            <span className="bg-white/95 backdrop-blur px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-800 shadow-xl flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-              Remaining: {timeLeft}
+          <div className="absolute bottom-8 left-8">
+            <span className="bg-slate-950/80 backdrop-blur px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-100 border border-white/10 shadow-2xl flex items-center gap-3">
+              <span className={`w-2 h-2 rounded-full ${timeLeft === 'EXPIRED' ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'}`}></span>
+              Expiry: {timeLeft}
             </span>
           </div>
         </div>
 
-        <div className="p-8">
-          <h2 className="text-3xl font-black text-slate-800 mb-2 tracking-tight">{item.name}</h2>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 bg-slate-50 rounded-3xl mb-8 border border-slate-100">
+        <div className="p-10">
+          <div className="flex justify-between items-start mb-8">
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Price</p>
-              <p className="text-3xl font-black text-indigo-600 tracking-tighter">${item.highestBidAmount.toLocaleString()}</p>
+              <h2 className="text-4xl font-black text-white tracking-tighter mb-1">{item.name}</h2>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Global Asset Ledger</p>
             </div>
-            <div className="text-right flex flex-col items-end overflow-hidden">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                {item.isTie ? 'Tied Leaders' : 'Leader'}
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-6 bg-slate-800/50 rounded-[32px] mb-10 border border-white/5">
+            <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Last Valid Offer</p>
+              <p className="text-4xl font-black text-indigo-400 tracking-tighter">${item.highestBidAmount.toLocaleString()}</p>
+            </div>
+            <div className="text-right flex flex-col items-end overflow-hidden border-l border-white/5 pl-6">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                {item.isTie ? 'Participating Leaders' : 'Sole Leader'}
               </p>
-              <div className="flex flex-wrap justify-end gap-1.5 max-h-[60px] overflow-y-auto">
+              <div className="flex flex-wrap justify-end gap-2 max-h-[72px] overflow-y-auto custom-scrollbar">
                 {tiedBidders.length > 0 ? (
                   tiedBidders.map((name) => (
-                    <span key={name} className="text-xs font-bold text-slate-700 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-sm whitespace-nowrap">
-                      {name}
-                    </span>
+                    <div key={name} className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-white/5 shadow-inner">
+                      <span className="text-[11px] font-bold text-slate-100">{name}</span>
+                      <span className="text-indigo-400 font-black text-[11px]">${item.highestBidAmount.toLocaleString()}</span>
+                    </div>
                   ))
                 ) : (
-                  <span className="text-sm font-bold text-slate-400 italic">No leader yet</span>
+                  <span className="text-sm font-bold text-slate-600 italic">Position unclaimed</span>
                 )}
               </div>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <div className="flex justify-between items-center mb-2 px-1">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-wider">Place Your Bid</label>
-                <span className="text-[10px] font-bold text-indigo-500 px-2 py-0.5 bg-indigo-50 rounded-lg">Match bid permitted</span>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center px-1">
+                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">New Authorization Amount</label>
+                <span className="text-[10px] font-bold text-indigo-400 px-3 py-1 bg-indigo-500/10 rounded-full border border-indigo-500/20 uppercase tracking-widest">Match Permitted</span>
               </div>
-              <div className="relative">
-                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 font-black text-2xl">$</span>
+              <div className="relative group">
+                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-500 font-black text-3xl transition-colors">$</span>
                 <input 
                   type="number"
                   step="1"
                   value={bidAmount}
                   onChange={(e) => setBidAmount(parseInt(e.target.value) || 0)}
                   disabled={isSubmitting || cooldown > 0 || timeLeft === 'EXPIRED'}
-                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl py-5 pl-12 pr-6 font-black text-3xl focus:border-indigo-500 focus:bg-white transition-all outline-none tracking-tighter"
+                  className="w-full bg-slate-800/50 border border-white/5 rounded-3xl py-6 pl-14 pr-8 font-black text-4xl text-white focus:border-indigo-500/50 focus:bg-slate-800 outline-none transition-all tracking-tighter glow-indigo"
                   placeholder="0"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="p-4 bg-rose-50 text-rose-600 rounded-2xl text-xs font-bold flex items-center gap-3 animate-shake border border-rose-100">
+              <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-2xl text-xs font-bold flex items-center gap-3 animate-shake">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
@@ -176,36 +182,36 @@ const BidModal: React.FC<BidModalProps> = ({ item, user, bids, onClose, onPlaceB
             <button 
               type="submit"
               disabled={isSubmitting || cooldown > 0 || timeLeft === 'EXPIRED'}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-black py-5 rounded-3xl shadow-xl shadow-indigo-100 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
+              className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black py-6 rounded-3xl shadow-2xl shadow-indigo-900/30 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 glow-indigo text-sm uppercase tracking-[0.2em]"
             >
               {isSubmitting ? (
-                <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <div className="w-6 h-6 border-[3px] border-white/20 border-t-white rounded-full animate-spin"></div>
               ) : cooldown > 0 ? (
-                `Wait ${cooldown}s`
+                `Awaiting Lock (${cooldown}s)`
               ) : (
-                bidAmount === item.highestBidAmount ? 'Match Highest Bid' : 'Submit New Bid'
+                bidAmount === item.highestBidAmount ? 'Match Participating Bid' : 'Authorize New High Bid'
               )}
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-100">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Live Bidding Activity</h4>
-            <div className="space-y-3 max-h-44 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+          <div className="mt-12 pt-8 border-t border-white/5">
+            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6">Recent Authorization Logs</h4>
+            <div className="space-y-4 max-h-48 overflow-y-auto pr-3 custom-scrollbar">
               {itemHistory.length > 0 ? itemHistory.map((bid) => (
-                <div key={bid.id} className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${bid.type === 'PLACE' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                <div key={bid.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-800/30 border border-white/5 hover:border-white/10 transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-2.5 h-2.5 rounded-full ${bid.bidAmount === item.highestBidAmount ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 'bg-slate-700'}`}></div>
                     <div>
-                      <p className="text-xs font-black text-slate-800 leading-tight">{bid.userName}</p>
-                      <p className="text-[10px] text-slate-400 font-medium">
-                        {bid.bidAmount === item.highestBidAmount ? 'Matched current' : 'Placed a bid'}
+                      <p className="text-sm font-black text-slate-200 leading-tight">{bid.userName}</p>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+                        {bid.bidAmount === item.highestBidAmount ? 'Matching Confirmation' : 'Escalation Bid'}
                       </p>
                     </div>
                   </div>
-                  <span className="font-black text-slate-800 tracking-tighter text-sm">${bid.bidAmount.toLocaleString()}</span>
+                  <span className="font-black text-white tracking-tight text-lg">${bid.bidAmount.toLocaleString()}</span>
                 </div>
               )) : (
-                <div className="text-center py-6 text-slate-300 font-bold text-xs italic">No activity yet. Lead the way!</div>
+                <div className="text-center py-8 text-slate-700 font-black text-xs uppercase tracking-widest italic">Ledger Empty</div>
               )}
             </div>
           </div>
