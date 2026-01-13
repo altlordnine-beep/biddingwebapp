@@ -1,0 +1,5 @@
+{
+  "name": "New BidMaster Pro",
+  "description": "A comprehensive bidding system with real-time updates, Google Sheets integration, and admin management for items and users.",
+  "requestFramePermissions": []
+}
