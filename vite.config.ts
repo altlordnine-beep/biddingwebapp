@@ -6,12 +6,13 @@ export default defineConfig({
   plugins: [react()],
   build: {
     target: 'esnext',
-    minify: 'terser',
+    minify: 'esbuild',
     cssMinify: true,
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor': ['react', 'react-dom'],
+          'react-vendor': ['react', 'react-dom'],
         },
       },
     },

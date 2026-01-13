@@ -4,12 +4,12 @@ import { INITIAL_USERS, INITIAL_ITEMS } from '../constants';
 
 /**
  * PRODUCTION READY SHEETS SERVICE
- * In a Vercel deployment, you can set GOOGLE_SHEET_API_URL in your Environment Variables.
- * This should point to a Google Apps Script Web App or a service like SheetDB.
+ * In your Vercel project settings, set VITE_SHEETS_API_URL.
  */
 
 class SheetsService {
   private storageKey = 'bidmaster_v2_data';
+  // Use Vite's standard way of accessing env vars
   private apiUrl = (import.meta as any).env?.VITE_SHEETS_API_URL || '';
 
   private async getLocalState(): Promise<AppState> {
@@ -38,15 +38,16 @@ class SheetsService {
       try {
         const response = await fetch(this.apiUrl);
         if (!response.ok) throw new Error('Network response was not ok');
-        return await response.json();
+        const remoteState = await response.json();
+        // Sync local storage with remote for offline persistence
+        this.saveToLocal(remoteState);
+        return remoteState;
       } catch (err) {
         console.warn("API Fetch failed, falling back to Local Storage", err);
         return this.getLocalState();
       }
     }
-    return new Promise((resolve) => {
-      setTimeout(async () => resolve(await this.getLocalState()), 150);
-    });
+    return this.getLocalState();
   }
 
   async updateState(newState: AppState): Promise<boolean> {
@@ -59,6 +60,7 @@ class SheetsService {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newState)
         });
+        return true;
       } catch (err) {
         console.error("API Update failed", err);
         return false;
@@ -75,6 +77,8 @@ class SheetsService {
       timestamp: new Date().toISOString()
     };
     state.logs.unshift(newLog);
+    // Keep logs list manageable
+    if (state.logs.length > 100) state.logs = state.logs.slice(0, 100);
     await this.updateState(state);
   }
 }
